@@ -102,21 +102,28 @@ export function useChat() {
 
     for await (const event of streamAsyncIterator(res.body)) {
       setState("loading");
-      const data = decoder.decode(event).split("\n")
+      const data = decoder.decode(event).split("\n");
       for (const chunk of data) {
-        if(!chunk) continue;
-        const message = JSON.parse(chunk);
+        if (!chunk) continue;
+        let message;
+        try {
+          message = JSON.parse(chunk);
+        } catch (err) {
+          console.error("Ungültiges JSON vom Server:", chunk);
+          continue;
+        }
         if (message?.role === "assistant") {
           chatContent = "";
           continue;
         }
-        const content = message?.choices?.[0]?.delta?.content
+        const content = message?.choices?.[0]?.delta?.content;
         if (content) {
           chatContent += content;
           setCurrentChat(chatContent);
         }
       }
     }
+
 
     setChatHistory((curr) => [
       ...curr,
